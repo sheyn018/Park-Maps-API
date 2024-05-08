@@ -1,5 +1,7 @@
+
 const express = require('express');
 const puppeteer = require('puppeteer');
+const nodeFetch = require('node-fetch');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -25,7 +27,7 @@ app.get('/SVG-Map', async (req: { query: { svgUrl: any; location: any; }; }, res
         // Getting SVG Content
         const loadSVG = async (svgUrl: string): Promise<string> => {
             try {
-                const response = await fetch(svgUrl);
+                const response = await nodeFetch(svgUrl);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }

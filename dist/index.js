@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 const express = require('express');
 const puppeteer = require('puppeteer');
+const nodeFetch = require('node-fetch');
 const app = express();
 const port = process.env.PORT || 3000;
 let browser;
@@ -31,7 +32,7 @@ app.get('/SVG-Map', (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         // Getting SVG Content
         const loadSVG = (svgUrl) => __awaiter(void 0, void 0, void 0, function* () {
             try {
-                const response = yield fetch(svgUrl);
+                const response = yield nodeFetch(svgUrl);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
