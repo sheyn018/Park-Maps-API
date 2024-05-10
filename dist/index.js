@@ -23,106 +23,45 @@ function initBrowser() {
         });
     });
 }
-app.get('/SVG-Map', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { svgUrl, location } = req.query;
-        console.log('Requested SVG URL:', svgUrl);
-        console.log('Requested location:', location);
-        let svgContent = '';
-        // Getting SVG Content
-        const loadSVG = (svgUrl) => __awaiter(void 0, void 0, void 0, function* () {
-            try {
-                const response = yield nodeFetch(svgUrl);
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                svgContent = yield response.text();
-                return svgContent;
-            }
-            catch (error) {
-                console.error('Error fetching SVG:', error);
-                throw error;
-            }
-        });
-        svgContent = yield loadSVG(svgUrl);
-        const htmlContent = `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <title>Interactive Resort Map</title>
-            <style>
-                #mapContainer svg {
-                    width: 100%;
-                    max-width: 800px;
-                    height: auto;
-                    display: block;
-                    margin: 0 auto;
-                }
-                #${location} {
-                    fill: red !important;
-                }
-            </style>
-        </head>
-        <body>
-            <div id="mapContainer">
-                ${svgContent}
-            </div>
-        </body>
-        </html>       
-        `;
-        const svgSelector = '#mapContainer';
-        const screenshotBuffer = yield getSVGMap(htmlContent, svgSelector);
-        if (screenshotBuffer) {
-            res.set('Content-Type', 'image/png');
-            res.send(screenshotBuffer);
-        }
-        else {
-            res.status(500).json({ error: 'Failed to capture screenshot' });
-        }
-    }
-    catch (error) {
-        console.error('Unexpected error:', error);
-        res.status(500).json({ error: 'Unexpected error' });
-    }
-}));
-function getSVGMap(htmlContent, svgSelector) {
+// Function to load SVG content from URL
+function loadSVG(svgUrl) {
     return __awaiter(this, void 0, void 0, function* () {
-        const page = yield browser.newPage();
         try {
-            yield page.setContent(htmlContent);
-            yield page.evaluate(() => document.fonts.ready);
-            yield page.waitForSelector(svgSelector, { visible: true });
-            // Get the SVG dimensions
-            const dimensions = yield page.evaluate((selector) => {
-                const element = document.querySelector(selector);
-                if (!element) {
-                    throw new Error("SVG element not found");
-                }
-                return {
-                    width: element.clientWidth || element.getBoundingClientRect().width,
-                    height: element.clientHeight || element.getBoundingClientRect().height
-                };
-            }, svgSelector);
-            // Set the viewport to match SVG dimensions
-            yield page.setViewport({
-                width: dimensions.width,
-                height: dimensions.height,
-                deviceScaleFactor: 1,
-            });
-            return yield page.screenshot({
-                clip: { x: 0, y: 0, width: dimensions.width, height: dimensions.height },
-            });
+            const response = yield nodeFetch(svgUrl);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return yield response.text();
         }
         catch (error) {
-            console.error('Error during screenshot capture:', error.message);
-            return null;
-        }
-        finally {
-            yield page.close();
+            console.error('Error fetching SVG:', error);
+            throw error;
         }
     });
 }
+// Function to directly manipulate SVG content
+function modifySVG(svgContent, location) {
+    return svgContent.replace(/id="([^"]*?)"/g, (match, id) => {
+        // Apply style changes directly within SVG where the ID matches
+        if (id === location) {
+            return `id="${id}" style="fill: red !important;"`;
+        }
+        return match;
+    });
+}
+app.get('/SVG-Map', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { svgUrl, location } = req.query;
+        const svgContent = yield loadSVG(svgUrl);
+        const modifiedSVGContent = modifySVG(svgContent, location);
+        res.set('Content-Type', 'image/svg+xml');
+        res.send(modifiedSVGContent);
+    }
+    catch (error) {
+        console.error('Error during request:', error);
+        res.status(500).json({ error: 'Unexpected error' });
+    }
+}));
 const server = app.listen(port, () => __awaiter(void 0, void 0, void 0, function* () {
     yield initBrowser();
     console.log(`Server is running on port ${port}`);
