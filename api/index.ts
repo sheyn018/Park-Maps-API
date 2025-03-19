@@ -30,21 +30,33 @@ async function loadSVG(svgUrl: any) {
 }
 
 // Function to directly manipulate SVG content
-function modifySVG(svgContent: string, location: any) {
+function modifySVG(svgContent: string, locations: string | string[]) {
+    // Convert single location to array for consistent handling
+    const locationArray = Array.isArray(locations) ? locations : [locations];
+    
     return svgContent.replace(/id="([^"]*?)"/g, (match, id) => {
-        // Apply style changes directly within SVG where the ID matches
-        if (id === location) {
+        // Apply style changes directly within SVG where the ID matches any location in the array
+        if (locationArray.includes(id)) {
             return `id="${id}" style="fill: red !important;"`;
         }
         return match;
     });
 }
 
-app.get('/SVG-Map', async (req: { query: { svgUrl: any; location: any; }; }, res: { set: (arg0: string, arg1: string) => void; send: (arg0: string) => void; status: (arg0: number) => { (): any; new(): any; json: { (arg0: { error: string; }): void; new(): any; }; }; }) => {
+app.get('/SVG-Map', async (req: { query: { svgUrl: any; location: any; locations?: string; }; }, res: { set: (arg0: string, arg1: string) => void; send: (arg0: string) => void; status: (arg0: number) => { (): any; new(): any; json: { (arg0: { error: string; }): void; new(): any; }; }; }) => {
     try {
-        const { svgUrl, location } = req.query;
+        const { svgUrl, location, locations } = req.query;
+        
+        // Handle both single location and multiple locations parameters
+        let locationArray: string | string[] = location;
+        
+        // If locations parameter exists, parse it (assuming comma-separated format)
+        if (locations) {
+            locationArray = locations.split(',').map(loc => loc.trim());
+        }
+        
         const svgContent = await loadSVG(svgUrl);
-        const modifiedSVGContent = modifySVG(svgContent, location);
+        const modifiedSVGContent = modifySVG(svgContent, locationArray);
 
         res.set('Content-Type', 'image/svg+xml');
         res.send(modifiedSVGContent);

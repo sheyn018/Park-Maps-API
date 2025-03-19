@@ -40,10 +40,12 @@ function loadSVG(svgUrl) {
     });
 }
 // Function to directly manipulate SVG content
-function modifySVG(svgContent, location) {
+function modifySVG(svgContent, locations) {
+    // Convert single location to array for consistent handling
+    const locationArray = Array.isArray(locations) ? locations : [locations];
     return svgContent.replace(/id="([^"]*?)"/g, (match, id) => {
-        // Apply style changes directly within SVG where the ID matches
-        if (id === location) {
+        // Apply style changes directly within SVG where the ID matches any location in the array
+        if (locationArray.includes(id)) {
             return `id="${id}" style="fill: red !important;"`;
         }
         return match;
@@ -51,9 +53,15 @@ function modifySVG(svgContent, location) {
 }
 app.get('/SVG-Map', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { svgUrl, location } = req.query;
+        const { svgUrl, location, locations } = req.query;
+        // Handle both single location and multiple locations parameters
+        let locationArray = location;
+        // If locations parameter exists, parse it (assuming comma-separated format)
+        if (locations) {
+            locationArray = locations.split(',').map(loc => loc.trim());
+        }
         const svgContent = yield loadSVG(svgUrl);
-        const modifiedSVGContent = modifySVG(svgContent, location);
+        const modifiedSVGContent = modifySVG(svgContent, locationArray);
         res.set('Content-Type', 'image/svg+xml');
         res.send(modifiedSVGContent);
     }
