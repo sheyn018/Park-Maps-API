@@ -43,6 +43,15 @@ function modifySVG(svgContent: string, locations: string | string[]) {
     });
 }
 
+app.get('/', (req: any, res: any) => {
+    res.send('Dynamic Maps API is running');
+}, 
+
+(error: any) => {
+    console.error('Error during request:', error);
+}
+);
+
 app.get('/SVG-Map', async (req: { query: { svgUrl: any; location: any; locations?: string; }; }, res: { set: (arg0: string, arg1: string) => void; send: (arg0: string) => void; status: (arg0: number) => { (): any; new(): any; json: { (arg0: { error: string; }): void; new(): any; }; }; }) => {
     try {
         const { svgUrl, location, locations } = req.query;
