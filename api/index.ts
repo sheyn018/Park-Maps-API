@@ -37,7 +37,7 @@ function modifySVG(svgContent: string, locations: string | string[]) {
     return svgContent.replace(/id="([^"]*?)"/g, (match, id) => {
         // Apply style changes directly within SVG where the ID matches any location in the array
         if (locationArray.includes(id)) {
-            return `id="${id}" style="fill: red !important;"`;
+            return `id="${id}" style="fill: blue !important;"`;
         }
         return match;
     });
